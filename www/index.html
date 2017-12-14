@@ -11,8 +11,23 @@
   </head>
   <body>
     <div class="container">
-        <h1>Visualization</h1>
-        <p>Here comes the visualization</p>        
+      <h1>Visualization</h1>
+      <table id="data-visualization"></table>
     </div>
+    <script>
+d3.json('data/energy_consumption.json', function(energy_consumption) {
+  let table = d3.select('#data-visualization');
+  table.append('tr')
+    .html('<th>Area</th><th>Value</th>');
+
+  let enterSelection = table.selectAll('.data-row')
+    .data(energy_consumption)
+    .enter()
+    .append('tr')
+    .html(function(d) {
+      return "<td>" + d.area + "</td><td>" + d.value + "</td>";
+    });
+})
+    </script>
   </body>
 </html>
