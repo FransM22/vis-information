@@ -12,15 +12,23 @@
   <body>
     <div class="container">
       <h1>Visualization</h1>
+      <select id="select-year" class="custom-select">
+        <option value="2005">2005</option>
+        <option value="2006">2006</option>
+        <option value="2007">2007</option>
+        <option value="2008">2008</option>
+        <option value="2009">2009</option>
+      </select>
       <table id="data-visualization" class="table table-striped"></table>
     </div>
     <script>
 function fillTable(selector, data, fields) {
-  let table = d3.select(selector);
+  let table = d3.select(selector)
+    .html('');
   table.append('thead')
     .html('<tr><th>' + fields.join('</th><th>') + '</th></tr>');
 
-  let enterSelection = table
+  table
     .append('tbody')
     .selectAll('.data-row')
     .data(data)
@@ -37,8 +45,37 @@ function fillTable(selector, data, fields) {
       return row;
     });
 }
+function getSubset(data, fieldSelector) {
+  // getSubset returns a subset of the data that matches the given constraints
+  //
+  // fieldSelector must be an object of the following format:
+  //  { 'year': '2000', 'fuel': 'coal'}
+  // The field names are not restricted.
+
+  return data.filter(row => {
+    let shouldSelect = true;
+    Object.keys(fieldSelector).forEach((fieldName) => {
+      if (row[fieldName] !== fieldSelector[fieldName]) {
+        shouldSelect = false;
+      }
+    });
+    return shouldSelect;
+  })
+}
 d3.json('data/energy_consumption.json', function(energy_consumption) {
-  fillTable('#data-visualization', energy_consumption, ['area', 'value']);
+  let tableId = '#data-visualization';
+  let tableColumns = ['area', 'year', 'value'];
+  fillTable(tableId, energy_consumption, tableColumns);
+
+  d3.select('#select-year')
+    .on('change', function() {
+      let selected_year = d3.select(this).node().value;
+      fillTable(
+        tableId,
+        getSubset(energy_consumption, {'year': selected_year}),
+        tableColumns
+      )
+    });
 })
     </script>
   </body>
