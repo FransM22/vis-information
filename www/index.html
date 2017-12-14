@@ -12,15 +12,17 @@
   <body>
     <div class="container">
       <h1>Visualization</h1>
-      <table id="data-visualization"></table>
+      <table id="data-visualization" class="table table-striped"></table>
     </div>
     <script>
 d3.json('data/energy_consumption.json', function(energy_consumption) {
   let table = d3.select('#data-visualization');
-  table.append('tr')
-    .html('<th>Area</th><th>Value</th>');
+  table.append('thead')
+    .html('<tr><th>Area</th><th>Value</th></tr>');
 
-  let enterSelection = table.selectAll('.data-row')
+  let enterSelection = table
+    .append('tbody')
+    .selectAll('.data-row')
     .data(energy_consumption)
     .enter()
     .append('tr')
