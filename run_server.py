@@ -4,7 +4,7 @@
 # www/ directory can be accessed by a web browser on the port specified.
 # 
 # Run with
-# > python3 ./runserver.py
+# > python3 ./run_server.py
 #
 import http.server
 import socketserver
