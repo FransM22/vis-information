@@ -15,20 +15,30 @@
       <table id="data-visualization" class="table table-striped"></table>
     </div>
     <script>
-d3.json('data/energy_consumption.json', function(energy_consumption) {
-  let table = d3.select('#data-visualization');
+function fillTable(selector, data, fields) {
+  let table = d3.select(selector);
   table.append('thead')
-    .html('<tr><th>Area</th><th>Value</th></tr>');
+    .html('<tr><th>' + fields.join('</th><th>') + '</th></tr>');
 
   let enterSelection = table
     .append('tbody')
     .selectAll('.data-row')
-    .data(energy_consumption)
+    .data(data)
     .enter()
     .append('tr')
     .html(function(d) {
-      return "<td>" + d.area + "</td><td>" + d.value + "</td>";
+      let row = '<td>';
+      let sep = '';
+      fields.forEach(function(field) {
+        row += sep + d[field];
+        sep = '</td><td>';
+      })
+      row += '</td>';
+      return row;
     });
+}
+d3.json('data/energy_consumption.json', function(energy_consumption) {
+  fillTable('#data-visualization', energy_consumption, ['area', 'value']);
 })
     </script>
   </body>
