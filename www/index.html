@@ -12,13 +12,8 @@
   <body>
     <div class="container">
       <h1>Visualization</h1>
-      <select id="select-year" class="custom-select">
-        <option value="2005">2005</option>
-        <option value="2006">2006</option>
-        <option value="2007">2007</option>
-        <option value="2008">2008</option>
-        <option value="2009">2009</option>
-      </select>
+      <select id="select-year" class="custom-select"></select>
+      <select id="select-area" class="custom-select"></select>
       <table id="data-visualization" class="table table-striped"></table>
     </div>
     <script>
@@ -62,20 +57,52 @@ function getSubset(data, fieldSelector) {
     return shouldSelect;
   })
 }
+function getRangeOfField(data, fieldName) {
+  let range = new Set();
+  data.forEach(function(row) {
+    range.add(row[fieldName]);
+  });
+  return Array.from(range);
+}
+function enterSelectionInTable(data, tableId) {
+  let selected_year = d3.select('#select-year').node().value;
+  let selected_area = d3.select('#select-area').node().value;
+  let tableColumns = ['area', 'year', 'value'];
+
+  fillTable(
+    tableId,
+    getSubset(data, {'year': selected_year, 'area': selected_area}),
+    tableColumns
+  )
+}
 d3.json('data/energy_consumption.json', function(energy_consumption) {
   let tableId = '#data-visualization';
-  let tableColumns = ['area', 'year', 'value'];
-  fillTable(tableId, energy_consumption, tableColumns);
 
-  d3.select('#select-year')
-    .on('change', function() {
-      let selected_year = d3.select(this).node().value;
-      fillTable(
-        tableId,
-        getSubset(energy_consumption, {'year': selected_year}),
-        tableColumns
-      )
-    });
+  let select_year = d3.select('#select-year');
+
+  select_year
+    .selectAll('option')
+    .data(getRangeOfField(energy_consumption, 'year'))
+    .enter()
+    .append('option')
+    .attr('value', d => d)
+    .text(d => d);
+
+  select_year
+    .on('change', () => enterSelectionInTable(energy_consumption, '#data-visualization'));
+
+  let select_area = d3.select('#select-area');
+
+  select_area
+    .selectAll('option')
+    .data(getRangeOfField(energy_consumption, 'area'))
+    .enter()
+    .append('option')
+    .attr('value', d => d)
+    .text(d => d);
+
+  select_area
+    .on('change', () => enterSelectionInTable(energy_consumption, '#data-visualization'));
 })
     </script>
   </body>
