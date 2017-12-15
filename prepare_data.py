@@ -9,6 +9,7 @@
 import csv
 import json
 import os
+import re
 from PIL import Image
 
 if not os.path.exists('www/data/'):
@@ -32,23 +33,64 @@ with open('data/raw/total-final-energy-consumption.csv') as csvfile:
   with open('www/data/energy_consumption.json', 'w') as jsonfile:
     json.dump(observations, jsonfile)
 
-print("\nDone")
+print("Done")
+
+print('Converting surface temperature files')
+surf_temp_dir = 'data/raw/surface_temperature/'
+jpg_files = []
+for filename in os.listdir(surf_temp_dir):
+  if filename[-3:] != 'tif':
+    continue
+
+  tif_path = surf_temp_dir + filename
+  meta_file_path = surf_temp_dir + filename + '.aux.xml'
+
+  jpg_path = 'www/data/' + filename[:-3] + "jpg"
+  tiffile = Image.open(tif_path)
+  jpgfile = tiffile.convert('RGB')
+  jpgfile.save(jpg_path, 'JPEG', quality=90)
+
+  with open(meta_file_path) as metafile:
+    lines = metafile.readlines()
+    production_date_line_id, production_date = None, None
+    north_coordinate_line_id, north_coordinate = None, None
+    east_coordinate_line_id, east_coordinate = None, None
+    south_coordinate_line_id, south_coordinate = None, None
+    west_coordinate_line_id, west_coordinate = None, None
 
 
-# TODO - this is only a single sample file
-tiffile = Image.open('data/raw/surface_temperature/h17v03_006_2015240204337.tif')
-print('Converting data/raw/surface_temperature/h17v03_006_2015240204337.tif')
-jpgfile = tiffile.convert('RGB')
-jpgfile.save('www/data/h17v03_006_2015240204337.jpg', 'JPEG', quality=90)
+    for line_id, line in enumerate(lines):
+      if re.match(r'\s+OBJECT\s*=\s*PRODUCTIONDATETIME', line):
+        production_date_line_id = line_id + 2
+      if re.match(r'\s+OBJECT\s*=\s*NORTHBOUNDINGCOORDINATE', line):
+        north_coordinate_line_id = line_id + 2
+      if re.match(r'\s+OBJECT\s*=\s*EASTBOUNDINGCOORDINATE', line):
+        east_coordinate_line_id = line_id + 2
+      if re.match(r'\s+OBJECT\s*=\s*SOUTHBOUNDINGCOORDINATE', line):
+        south_coordinate_line_id = line_id + 2
+      if re.match(r'\s+OBJECT\s*=\s*WESTBOUNDINGCOORDINATE', line):
+        west_coordinate_line_id = line_id + 2
+
+      if line_id == production_date_line_id:
+        production_date = (line.split('= ')[1]).strip()
+      if line_id == north_coordinate_line_id:
+        north_coordinate = float((line.split('= ')[1]).strip())
+      if line_id == east_coordinate_line_id:
+        east_coordinate = float((line.split('= ')[1]).strip())
+      if line_id == south_coordinate_line_id:
+        south_coordinate = float((line.split('= ')[1]).strip())
+      if line_id == west_coordinate_line_id:
+        west_coordinate = float((line.split('= ')[1]).strip())
+
+  jpg_files.append({
+    'filename': jpg_path[4:],
+    'north_bound': north_coordinate,
+    'east_bound': east_coordinate,
+    'south_bound': south_coordinate,
+    'west_bound': west_coordinate,
+    'production_datetime': production_date
+  })
 
 with open('www/data/temperature_data.json', 'w') as jsonfile:
-  json.dump({
-    'filename': 'data/h17v03_006_2015240204337.jpg',
-    'north_bound': 59.9958333333333,
-    'south_bound': 50.0041666666667,
-    'east_bound': -0.00649538000934793,
-    'west_bound': -20.0083175793839,
-    'production_datetime': '2015-08-28T20:43:37.000Z'
-  }, jsonfile)
-
-print("\nDone")
+  json.dump(jpg_files, jsonfile)
+print("Done")

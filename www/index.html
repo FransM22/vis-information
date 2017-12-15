@@ -12,6 +12,8 @@
   <body>
     <div class="container">
       <h1>Visualization</h1>
+      <select id="select-temperature" class="custom-select"></select>
+
       <select id="select-year" class="custom-select"></select>
       <select id="select-area" class="custom-select"></select>
       <img id="img-visualization">
@@ -110,7 +112,17 @@ d3.json('data/energy_consumption.json', function(energy_consumption) {
     .on('change', () => enterSelectionInTable(energy_consumption, '#data-visualization'));
 });
 d3.json('data/temperature_data.json', function(temperature_data) {
-  loadImage("#img-visualization", temperature_data.filename);
+  let select_temperature = d3.select('#select-temperature');
+  select_temperature
+    .selectAll('option')
+    .data(temperature_data)
+    .enter()
+    .append('option')
+    .attr('value', d => d.filename)
+    .text(d => d.production_datetime);
+
+  select_temperature
+    .on('change', function() {loadImage('#img-visualization', this.value)});
 })
     </script>
   </body>
