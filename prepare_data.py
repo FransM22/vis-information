@@ -107,6 +107,7 @@ surf_temp_dir = 'data/raw/surface_temperature_v2/'
 png_files = []
 for filename_1, filename_2 in get_image_pairs(os.listdir(surf_temp_dir)):
   png_path = 'www/data/' + filename_1[:-3] + "png"
+  year = filename_1[-36:-32]
 
   img_1 = process_image(filename_1)
   img_2 = process_image(filename_2)
@@ -124,6 +125,7 @@ for filename_1, filename_2 in get_image_pairs(os.listdir(surf_temp_dir)):
     'east_bound': None,
     'south_bound': None,
     'west_bound': None,
+    'year': year,
     'production_datetime': production_date
   })
 
