@@ -17,6 +17,68 @@ from matplotlib import pyplot
 from pyhdf.SD import *
 from PIL import Image
 
+def get_image_pairs(paths):
+  all_paths = [x for x in sorted(paths)]
+  pairs = []
+
+  current_pair = []
+  for path in all_paths:
+    if path[-3:] != 'hdf':
+      print('Ignoring ' + path)
+      continue
+    if len(current_pair) == 2:
+      pairs.append(current_pair)
+      current_pair = []
+    current_pair.append(path)
+
+  return pairs
+
+def process_image(path):
+  hdf_path = surf_temp_dir + path
+  hdf_file = SD(hdf_path)
+
+  # Available datasets:
+  #  LST_Day_1km: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 0)
+  #  QC_Day: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 1)
+  #  Day_view_time: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 2)
+  #  Day_view_angl: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 3)
+  #  LST_Night_1km: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 4)
+  #  QC_Night: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 5)
+  #  Night_view_time: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 6)
+  #  Night_view_angl: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 7)
+  #  Emis_31: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 8)
+  #  Emis_32: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 9)
+  #  Clear_day_cov: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 10)
+  #  Clear_night_cov: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 11)
+  hdf_obj = hdf_file.select('LST_Night_1km')
+
+  data_matrix = numpy.array(hdf_obj.get())
+
+  min_val = min(numpy.array(data_matrix).flatten())
+  max_val = max(numpy.array(data_matrix).flatten())
+
+  # low = min(x for x in numpy.array(data_matrix).flatten() if x > min_val)
+  # high = max(x for x in numpy.array(data_matrix).flatten() if x < max_val)
+  low, high = 12000, 14000 # This seems to be an appropriate range for all images
+  print('{} Min: {}, Max {}, Clipping to range ({}, {})'.format(path, min_val, max_val, low, high))
+
+  image_int_matrix = numpy.clip(data_matrix, low, high)
+  image_int_matrix = numpy.divide(numpy.subtract(image_int_matrix, low), high - low)
+  image_int_matrix *= 255
+
+  img = Image.fromarray(numpy.uint8(image_int_matrix)).convert('RGBA')
+
+  # Set transparency
+  col_img = []
+  for val in img.getdata():
+    intensity = val[0]
+    opacity = 255
+    if intensity == 0:
+      opacity = 0
+    col_img.append((intensity, 0, 0, opacity))
+  img.putdata(col_img)
+  return img
+
 if not os.path.exists('www/data/'):
   os.makedirs('www/data/')
 
@@ -43,55 +105,17 @@ print("Done")
 print('Converting surface temperature files v2')
 surf_temp_dir = 'data/raw/surface_temperature_v2/'
 png_files = []
-for filename in os.listdir(surf_temp_dir):
-  if filename[-3:] != 'hdf':
-    print('Ignoring ' + filename)
-    continue
-  hdf_path = surf_temp_dir + filename
-  hdf_file = SD(hdf_path)
+for filename_1, filename_2 in get_image_pairs(os.listdir(surf_temp_dir)):
+  png_path = 'www/data/' + filename_1[:-3] + "png"
 
-  # Available datasets:
-  #  LST_Day_1km: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 0)
-  #  QC_Day: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 1)
-  #  Day_view_time: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 2)
-  #  Day_view_angl: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 3)
-  #  LST_Night_1km: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 4)
-  #  QC_Night: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 5)
-  #  Night_view_time: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 6)
-  #  Night_view_angl: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 7)
-  #  Emis_31: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 8)
-  #  Emis_32: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 21, 9)
-  #  Clear_day_cov: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 10)
-  #  Clear_night_cov: (('YDim:MODIS_Grid_Daily_1km_LST', 'XDim:MODIS_Grid_Daily_1km_LST'), (1200, 1200), 23, 11)
-  hdf_obj = hdf_file.select('LST_Night_1km')
+  img_1 = process_image(filename_1)
+  img_2 = process_image(filename_2)
 
-  png_path = 'www/data/' + filename[:-3] + "png"
-  data_matrix = numpy.array(hdf_obj.get())
+  new_im = Image.new('RGBA', (img_1.size[0] + img_2.size[0], img_1.size[1]))
+  new_im.paste(img_1, (0,0))
+  new_im.paste(img_2, (img_1.size[0], 0))
 
-  min_val = min(numpy.array(data_matrix).flatten())
-  max_val = max(numpy.array(data_matrix).flatten())
-
-  # low = min(x for x in numpy.array(data_matrix).flatten() if x > min_val)
-  # high = max(x for x in numpy.array(data_matrix).flatten() if x < max_val)
-  low, high = 12000, 14000 # This seems to be an appropriate range for all images
-  print('{} Min: {}, Max {}, Clipping to range ({}, {})'.format(filename, min_val, max_val, low, high))
-
-  image_int_matrix = numpy.clip(data_matrix, low, high)
-  image_int_matrix = numpy.divide(numpy.subtract(image_int_matrix, low), high - low)
-  image_int_matrix *= 255
-  
-  img = Image.fromarray(numpy.uint8(image_int_matrix)).convert('RGBA')
-
-  # Set transparency
-  col_img = []
-  for val in img.getdata():
-    intensity = val[0]
-    opacity = 255
-    if intensity == 0:
-      opacity = 0
-    col_img.append((intensity, 0, 0, opacity))
-  img.putdata(col_img)
-  img.save(png_path)
+  new_im.save(png_path)
 
   production_date = str(datetime.now())
   png_files.append({
