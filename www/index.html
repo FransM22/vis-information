@@ -22,6 +22,7 @@
       </div>
       <div class="row">
         <div class="col">
+          <svg id="map-visualization" style="max-width:100%; max-height: 50vh;"></svg>
           <img id="img-visualization" style="max-width:100%; max-height: 50vh;">
         </div>
         <div class="col">
@@ -133,6 +134,52 @@ d3.json('data/temperature_data.json', function(temperature_data) {
 
   select_temperature
     .on('change', function() {loadImage('#img-visualization', this.value)});
+});
+d3.json('data/shape_data.json', function(shapes) {
+  let svg_map = d3.select('#map-visualization')
+    .attr('viewBox', function() {
+      // Coordinate bounds are given in left top right bottom, while the
+      // viewBox attribute requires left top width height
+      let left = -10.85,
+          top = 49.82,
+          right = 2.02
+          bottom = 59.47;
+      return '' + left + ' ' + top + ' ' + (right - left) + ' ' + (bottom - top);
+    });
+
+  [
+    [0, 'red'],
+    [1, 'green'],
+    [2, 'blue'],
+    [3, 'orange'],
+    [4, 'purple'],
+    [5, 'gray']
+  ].forEach(function (kv) {
+    d3.json('data/' + shapes[kv[0]], function(shape) {
+    svg_map
+      .append('path')
+      .datum(shape)
+      .attr('d', d3.geoPath())
+      .attr('style', 'fill: ' + kv[1] + ';');
+  });
+  })
+
+
+  d3.json('data/' + shapes[1], function(shape) {
+    svg_map
+      .append('path')
+      .datum(shape)
+      .attr('d', d3.geoPath())
+      .attr('style', 'fill: green;');
+  });
+
+  d3.json('data/' + shapes[2], function(shape) {
+    svg_map
+      .append('path')
+      .datum(shape)
+      .attr('d', d3.geoPath())
+      .attr('style', 'fill: blue;');
+  });
 })
     </script>
   </body>

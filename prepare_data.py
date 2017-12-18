@@ -10,6 +10,7 @@ import csv
 import json
 import os
 import re
+import shutil
 from datetime import datetime
 from PIL import Image
 
@@ -97,4 +98,16 @@ for filename in os.listdir(surf_temp_dir):
 
 with open('www/data/temperature_data.json', 'w') as jsonfile:
   json.dump(png_files, jsonfile)
+print("Done")
+
+print('Copying shape files')
+shape_dir = 'data/raw/shapes/'
+shape_files = []
+for filename in os.listdir(shape_dir):
+  if filename[-7:] != 'geojson':
+    continue
+  shape_files.append(filename)
+  shutil.copyfile(shape_dir + filename, 'www/data/' + filename)
+with open('www/data/shape_data.json', 'w') as jsonfile:
+  json.dump(shape_files, jsonfile)
 print("Done")
