@@ -26,10 +26,17 @@ def get_image_pairs(paths):
     if path[-3:] != 'hdf':
       print('Ignoring ' + path)
       continue
+    if len(current_pair) == 0:
+      current_pair.append(path)
+    elif len(current_pair) == 1:
+      if current_pair[0].split('.')[1] == path.split('.')[1]:
+        current_pair.append(path)
+      else:
+        print('Incomplete pair for ' + current_pair[0])
+        current_pair = [path]
     if len(current_pair) == 2:
       pairs.append(current_pair)
       current_pair = []
-    current_pair.append(path)
 
   return pairs
 
@@ -107,7 +114,7 @@ surf_temp_dir = 'data/raw/surface_temperature_v2/'
 png_files = []
 for filename_1, filename_2 in get_image_pairs(os.listdir(surf_temp_dir)):
   png_path = 'www/data/' + filename_1[:-3] + "png"
-  year = filename_1[-36:-32]
+  year = filename_1.split('.')[1]
 
   img_1 = process_image(filename_1)
   img_2 = process_image(filename_2)
