@@ -66,7 +66,7 @@ def process_image(path):
 
   # low = min(x for x in numpy.array(data_matrix).flatten() if x > min_val)
   # high = max(x for x in numpy.array(data_matrix).flatten() if x < max_val)
-  low, high = 12000, 14000 # This seems to be an appropriate range for all images
+  low, high = 12000, 15000 # This seems to be an appropriate range for all images
   print('{} Min: {}, Max {}, Clipping to range ({}, {})'.format(path, min_val, max_val, low, high))
 
   image_int_matrix = numpy.clip(data_matrix, low, high)
@@ -74,6 +74,7 @@ def process_image(path):
   image_int_matrix *= 255
 
   img = Image.fromarray(numpy.uint8(image_int_matrix)).convert('RGBA')
+  img = img.resize([img.size[0] // 2, img.size[1] // 2])  # Uses nearest neighbour by default
 
   # Set transparency
   col_img = []
