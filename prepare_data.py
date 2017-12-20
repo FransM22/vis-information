@@ -2,7 +2,8 @@
 
 # prepare_data.py requires the following files:
 # data/raw/total-final-energy-consumption.csv ( https://data.london.gov.uk/dataset/total-energy-consumption-borough )
-# data/raw/hxxvxx_006_2015xxx.tif (these are preprocessed data files)
+# data/raw/surface_temperature_v2/MOD11A1.Axxx.hdf (these are raw data files)
+# data/shapes/xxxxxx.geojson
 
 # prepare_data.py processes the raw data files and converts these to json
 # files
@@ -127,10 +128,6 @@ for filename_1, filename_2 in get_image_pairs(os.listdir(surf_temp_dir)):
   production_date = str(datetime.now())
   png_files.append({
     'filename': png_path[4:],
-    'north_bound': None,
-    'east_bound': None,
-    'south_bound': None,
-    'west_bound': None,
     'year': year,
     'production_datetime': production_date
   })

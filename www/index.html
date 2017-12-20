@@ -161,7 +161,8 @@ d3.json('data/shape_data.json', function(shapes) {
 
   let svg_map = d3.select('#map-visualization')
     .attr('width', widthp)
-    .attr('height', heightp);
+    .attr('height', heightp)
+    .attr('viewBox', '275 375 325 425');
 
   svg_map
     .append('image')
@@ -176,37 +177,17 @@ d3.json('data/shape_data.json', function(shapes) {
     .center([loncenterc, latcenterc])
     .translate([widthp / 2, heightp / 2]);
 
-  [
-    [0, 'red'],
-    [1, 'green'],
-    [2, 'blue'],
-    [3, 'orange'],
-    [4, 'purple'],
-    [5, 'gray']
-  ].forEach(function (kv) {
-    d3.json('data/' + shapes[kv[0]], function(shape) {
+  let colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+  let color_ix = 0;
+
+  shapes.forEach(function (shape_file) {
+    d3.json('data/' + shape_file, function (shape) {
       svg_map
         .append('path')
         .datum(shape)
         .attr('d', d3.geoPath().projection(projection))
-        .attr('style', 'fill: ' + kv[1] + ';');
+        .attr('style', 'fill: ' + colorScale(color_ix++) + ';');
     });
-  })
-
-  d3.json('data/' + shapes[1], function(shape) {
-    svg_map
-      .append('path')
-      .datum(shape)
-      .attr('d', d3.geoPath().projection(projection))
-      .attr('style', 'fill: green;');
-  });
-
-  d3.json('data/' + shapes[2], function(shape) {
-    svg_map
-      .append('path')
-      .datum(shape)
-      .attr('d', d3.geoPath().projection(projection))
-      .attr('style', 'fill: blue;');
   });
 })
     </script>
