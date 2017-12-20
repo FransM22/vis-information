@@ -64,8 +64,6 @@ def process_image(path):
   min_val = min(numpy.array(data_matrix).flatten())
   max_val = max(numpy.array(data_matrix).flatten())
 
-  # low = min(x for x in numpy.array(data_matrix).flatten() if x > min_val)
-  # high = max(x for x in numpy.array(data_matrix).flatten() if x < max_val)
   low, high = 12000, 15000 # This seems to be an appropriate range for all images
   print('{} Min: {}, Max {}, Clipping to range ({}, {})'.format(path, min_val, max_val, low, high))
 

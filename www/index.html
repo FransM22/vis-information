@@ -8,6 +8,7 @@
     <script src="assets/popper.js"></script><!-- Required for bootstrap -->
     <script src="assets/bootstrap.min.js"></script>
     <script src="assets/d3.min.js"></script>
+    <script src="assets/d3-geo-projection.min.js"></script>
   </head>
   <body>
     <div class="container">
@@ -22,13 +23,10 @@
       </div>
       <div class="row">
         <div class="col">
-          <img id="img-visualization" style="max-width:100%; max-height: 50vh; border: 1px solid steelblue;">
+          <svg id="map-visualization" style="border: 1px solid steelblue;"></svg>
         </div>
       </div>
       <div class="row">
-        <div class="col">
-          <svg id="map-visualization" style="max-width:100%; max-height: 50vh;"></svg>
-        </div>
         <div class="col">
           <table id="data-visualization" class="table table-striped"></table>
         </div>
@@ -60,7 +58,7 @@ function fillTable(selector, data, fields) {
 }
 function loadImage(selector, imgFile) {
   d3.select(selector)
-    .attr('src', imgFile);
+    .attr('href', imgFile);
 }
 function getSubset(data, fieldSelector) {
   // getSubset returns a subset of the data that matches the given constraints
@@ -137,24 +135,46 @@ d3.json('data/temperature_data.json', function(temperature_data) {
     .text(d => d.year);
 
   select_temperature
-    .on('change', function() {loadImage('#img-visualization', this.value)});
+    .on('change', function() {loadImage('#map-visualization image.background', this.value)});
 });
 d3.json('data/shape_data.json', function(shapes) {
-  let svg_map = d3.select('#map-visualization')
-    .attr('viewBox', function() {
-      // Coordinate bounds are given in left top right bottom, while the
-      // viewBox attribute requires left top width height
-      // let left = -10.85,
-      //     top = 49.82,
-      //     right = 2.02
-      //     bottom = 59.47;
+  // For the projection details, see https://modis-land.gsfc.nasa.gov/MODLAND_grid.html ,
+  // especially https://modis-land.gsfc.nasa.gov/pdf/sn_gring_10deg.txt :
+  //  iv  ih  0: ll lon    ll lat  1: ul lon    ul lat  2: ur lon    ur lat  3: lr lon    lr lat
+  //   3  17   -15.4860   49.7394   -20.0000   60.0000     0.0326   60.0089     0.0126   49.7425
+  //   3  18     0.0003   49.7434    -0.0159   60.0101    20.0206   59.9984    15.5011   49.7384
 
-      let left = -20.0083175793839,
-          top = 50.0041666666667,
-          right = 15.5534402770027
-          bottom = 59.9958333333333
-      return '' + left + ' ' + top + ' ' + (right - left) + ' ' + (bottom - top);
-    });
+  let leftc = -20.0000
+    rightc = 15.5011,
+    bottomc = (49.7425 + 49.7434)/2,
+    topc = (60.0089 + 60.0101)/2;
+
+  // Taking the average is not entirely accurate, but it seems to work
+  let loncenterc = (0.0326 + 0.0126 + 0.003 + -0.0159) / 4,
+      latcenterc = (60.0089 + 49.7425 + 49.7434 + 60.0101) / 4;
+
+  let widthc = rightc - leftc,  // raw coordinate values
+      heightc = topc - bottomc;
+
+  let widthp = 800, // pixel values
+      heightp = 800;
+
+  let svg_map = d3.select('#map-visualization')
+    .attr('width', widthp)
+    .attr('height', heightp);
+
+  svg_map
+    .append('image')
+    .attr('class', 'background')
+    .attr('width', widthp)
+    .attr('height', heightp)
+    .attr('x', 0)
+    .attr('y', 0);
+
+  let projection = d3.geoSinusoidal()
+    .scale(2350)  // Adjusted by trial-and-error after changing width or height values
+    .center([loncenterc, latcenterc])
+    .translate([widthp / 2, heightp / 2]);
 
   [
     [0, 'red'],
@@ -165,20 +185,19 @@ d3.json('data/shape_data.json', function(shapes) {
     [5, 'gray']
   ].forEach(function (kv) {
     d3.json('data/' + shapes[kv[0]], function(shape) {
-    svg_map
-      .append('path')
-      .datum(shape)
-      .attr('d', d3.geoPath())
-      .attr('style', 'fill: ' + kv[1] + ';');
-  });
+      svg_map
+        .append('path')
+        .datum(shape)
+        .attr('d', d3.geoPath().projection(projection))
+        .attr('style', 'fill: ' + kv[1] + ';');
+    });
   })
-
 
   d3.json('data/' + shapes[1], function(shape) {
     svg_map
       .append('path')
       .datum(shape)
-      .attr('d', d3.geoPath())
+      .attr('d', d3.geoPath().projection(projection))
       .attr('style', 'fill: green;');
   });
 
@@ -186,7 +205,7 @@ d3.json('data/shape_data.json', function(shapes) {
     svg_map
       .append('path')
       .datum(shape)
-      .attr('d', d3.geoPath())
+      .attr('d', d3.geoPath().projection(projection))
       .attr('style', 'fill: blue;');
   });
 })
