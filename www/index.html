@@ -181,7 +181,7 @@ d3.json('data/shape_data.json', function(shapes) {
   let color_ix = 0;
 
   shapes.forEach(function (shape_file) {
-    d3.json('data/' + shape_file, function (shape) {
+    d3.json(shape_file, function (shape) {
       svg_map
         .append('path')
         .datum(shape)
