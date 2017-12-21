@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# prepare_data.py requires the following files:
+# run_preparation.py requires the following files:
 # data/raw/total-final-energy-consumption.csv ( https://data.london.gov.uk/dataset/total-energy-consumption-borough )
 # data/raw/surface_temperature_v2/MOD11A1.Axxx.hdf (these are raw data files)
 # data/shapes/xxxxxx.geojson
 
-# prepare_data.py processes the raw data files and converts these to json
+# run_preparation.py processes the raw data files and converts these to json
 # files
 import csv
 import json
