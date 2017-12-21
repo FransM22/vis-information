@@ -17,14 +17,16 @@ class Preparator(RawDataPreparator):
   def write_output_files(self, output_dir_path):
     self.output_file_properties = []
 
-    for path_1, path_2 in self.__image_pairs:
-      filename = os.path.basename(path_1)
+    pair_ids_to_log = [int(n) for n in numpy.linspace(start=0, stop=len(self.__image_pairs), num=10)]
+
+    for pair_id, paths in enumerate(self.__image_pairs):
+      filename = os.path.basename(paths[0])
       output_filename = os.path.splitext(filename)[0] + '.png'
       output_path = os.path.join(output_dir_path, output_filename)
 
       image_identifier = filename.split('.')[1]
-      img_1 = self.__process_image(path_1)
-      img_2 = self.__process_image(path_2)
+      img_1 = self.__process_image(paths[0])
+      img_2 = self.__process_image(paths[1])
 
       combined_img = self.__combine_images(img_1, img_2)
       combined_img.save(output_path)
@@ -36,6 +38,10 @@ class Preparator(RawDataPreparator):
         'year': image_identifier,
         'production_datetime': str(datetime.now())
       })
+
+      if pair_id in pair_ids_to_log:
+        print('Processed {}/{} temperature file pairs'.format(pair_id + 1, len(self.__image_pairs)))
+    print('All temperature file pairs have been processed')
 
   def write_output_root(self, output_file_path):
     if self.output_file_properties is None:
@@ -85,7 +91,7 @@ class Preparator(RawDataPreparator):
 
     low, high = 12000, 15000  # This seems to be an appropriate range for all images
 
-    # Uncomment the following lines to show the progress and some properties of each image
+    # Uncomment the following lines to show some properties of each image
     # min_val = min(numpy.array(data_matrix).flatten())
     # max_val = max(numpy.array(data_matrix).flatten())
     # print('{} Min: {}, Max {}, Clipping to range ({}, {})'.format(os.path.basename(input_path), min_val, max_val, low, high))
