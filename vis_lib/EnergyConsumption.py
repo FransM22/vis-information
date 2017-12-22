@@ -1,6 +1,6 @@
 import csv
 import json
-from RawDataPreparator import RawDataPreparator
+from .RawDataPreparator import RawDataPreparator
 
 
 class Preparator(RawDataPreparator):

@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from pyhdf.SD import *
 from PIL import Image
-from RawDataPreparator import RawDataPreparator
+from .RawDataPreparator import RawDataPreparator
 
 
 class Preparator(RawDataPreparator):

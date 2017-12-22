@@ -1,7 +1,7 @@
 import json
 import os
 import shutil
-from RawDataPreparator import RawDataPreparator
+from .RawDataPreparator import RawDataPreparator
 
 
 class Preparator(RawDataPreparator):
